@@ -196,6 +196,10 @@ static int l_lovrPassSetWireframe(lua_State* L) {
   return 0;
 }
 
+static int l_lovrPassSend(lua_State* L) {
+  return 0;
+}
+
 const luaL_Reg lovrPass[] = {
   { "getType", l_lovrPassGetType },
   { "push", l_lovrPassPush },
@@ -219,5 +223,6 @@ const luaL_Reg lovrPass[] = {
   { "setStencilWrite", l_lovrPassSetStencilWrite },
   { "setWinding", l_lovrPassSetWinding },
   { "setWireframe", l_lovrPassSetWireframe },
+  { "send", l_lovrPassSend },
   { NULL, NULL }
 };

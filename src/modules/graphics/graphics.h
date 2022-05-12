@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #pragma once
 
@@ -370,3 +371,7 @@ void lovrPassSetStencilTest(Pass* pass, CompareMode test, uint8_t value, uint8_t
 void lovrPassSetStencilWrite(Pass* pass, StencilAction actions[3], uint8_t value, uint8_t mask);
 void lovrPassSetWinding(Pass* pass, Winding winding);
 void lovrPassSetWireframe(Pass* pass, bool wireframe);
+void lovrPassSendBuffer(Pass* pass, const char* name, size_t length, uint32_t slot, Buffer* buffer, uint32_t offset, uint32_t extent);
+void lovrPassSendTexture(Pass* pass, const char* name, size_t length, uint32_t slot, Texture* texture);
+void lovrPassSendSampler(Pass* pass, const char* name, size_t length, uint32_t slot, Sampler* sampler);
+void lovrPassSendConstant(Pass* pass, const char* name, size_t length, void** data, FieldType* type);

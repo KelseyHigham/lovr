@@ -4,6 +4,7 @@
 #include "math/math.h"
 #include "core/gpu.h"
 #include "core/maf.h"
+#include "core/spv.h"
 #include "core/os.h"
 #include "util.h"
 #include <math.h>
@@ -681,6 +682,22 @@ Blob* lovrGraphicsCompileShader(ShaderStage stage, Blob* source) {
 Shader* lovrShaderCreate(ShaderInfo* info) {
   Shader* shader = calloc(1, sizeof(Shader) + gpu_sizeof_shader());
   lovrAssert(shader, "Out of memory");
+
+  if (info->type == SHADER_GRAPHICS) {
+    spv_info vertex;
+    spv_result result = spv_parse(info->stages[0]->data, info->stages[0]->size, SPV_VERTEX, &vertex);
+    lovrCheck(result == SPV_OK, "Failed to load Shader: %s\n", spv_result_to_string(result));
+
+    shader->attributeMask = vertex.attributeMask;
+
+    spv_info fragment;
+    result = spv_parse(info->stages[1]->data, info->stages[1]->size, SPV_FRAGMENT, &fragment);
+    lovrCheck(result == SPV_OK, "Failed to load Shader: %s\n", spv_result_to_string(result));
+  } else {
+    spv_result result = spv_parse(info->stages[0]->data, info->stages[0]->size, SPV_COMPUTE, &shader->meta);
+    lovrCheck(result == SPV_OK, "Failed to load Shader: %s\n", spv_result_to_string(result));
+  }
+
   shader->ref = 1;
   shader->gpu = (gpu_shader*) (shader + 1);
   shader->info = *info;
