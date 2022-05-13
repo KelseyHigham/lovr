@@ -3,12 +3,6 @@
 #pragma once
 
 typedef enum {
-  SPV_VERTEX,
-  SPV_FRAGMENT,
-  SPV_COMPUTE
-} spv_stage;
-
-typedef enum {
   SPV_B32,
   SPV_I32,
   SPV_I32x2,
@@ -31,7 +25,6 @@ typedef struct {
   const char* name;
   uint32_t id;
   spv_type type;
-  double value;
 } spv_spec_constant;
 
 typedef struct {
@@ -41,8 +34,10 @@ typedef struct {
 } spv_push_constant;
 
 typedef enum {
-  SPV_BUFFER,
-  SPV_TEXTURE,
+  SPV_UNIFORM_BUFFER,
+  SPV_STORAGE_BUFFER,
+  SPV_SAMPLED_TEXTURE,
+  SPV_STORAGE_TEXTURE,
   SPV_SAMPLER
 } spv_resource_type;
 
@@ -52,11 +47,10 @@ typedef struct {
   const char* name;
   spv_resource_type type;
   uint32_t arraySize;
-  uint32_t stageMask;
 } spv_resource;
 
 typedef struct {
-  uint32_t attributeMask;
+  uint32_t inputLocationMask;
   uint32_t featureCount;
   uint32_t specConstantCount;
   uint32_t pushConstantCount;
@@ -74,5 +68,5 @@ typedef enum {
   SPV_TOO_BIG
 } spv_result;
 
-spv_result spv_parse(const void* source, uint32_t size, spv_stage stage, spv_info* info);
+spv_result spv_parse(const void* source, uint32_t size, spv_info* info);
 const char* spv_result_to_string(spv_result);
