@@ -65,8 +65,13 @@ typedef struct {
 typedef enum {
   SPV_OK,
   SPV_INVALID,
-  SPV_TOO_BIG
+  SPV_TOO_BIG,
+  SPV_LOCATION_TOO_BIG,
+  SPV_UNSUPPORTED_IMAGE_TYPE,
+  SPV_UNSUPPORTED_SPEC_CONSTANT_TYPE,
+  SPV_UNSUPPORTED_PUSH_CONSTANT_TYPE
 } spv_result;
 
 spv_result spv_parse(const void* source, uint32_t size, spv_info* info);
+spv_result spv_merge(spv_info* stages, uint32_t count, spv_info* merged);
 const char* spv_result_to_string(spv_result);

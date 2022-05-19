@@ -3,6 +3,7 @@
 #include "util.h"
 #include <lua.h>
 #include <lauxlib.h>
+#include <stdlib.h>
 
 static int l_lovrShaderGetType(lua_State* L) {
   Shader* shader = luax_checktype(L, 1, Shader);

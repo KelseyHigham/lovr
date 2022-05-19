@@ -66,10 +66,10 @@ struct Shader {
   uint32_t constantSize;
   uint32_t constantCount;
   uint32_t resourceCount;
-  uint32_t flagCount;
-  uint32_t activeFlagCount;
   ShaderConstant* constants;
   ShaderResource* resources;
+  uint32_t flagCount;
+  uint32_t overrideCount;
   gpu_shader_flag* flags;
   uint32_t* flagLookup;
 };
@@ -126,7 +126,7 @@ static void beginFrame(void);
 static gpu_stream* getTransfers(void);
 static gpu_texture* getAttachment(uint32_t size[2], uint32_t layers, TextureFormat format, bool srgb, uint32_t samples);
 static size_t measureTexture(TextureFormat format, uint16_t w, uint16_t h, uint16_t d);
-static void checkShaderFeatures(spv_feature* features, uint32_t count);
+static void checkShaderFeatures(uint32_t* features, uint32_t count);
 static void onMessage(void* context, const char* message, bool severe);
 
 // Entry
@@ -725,7 +725,7 @@ static void lovrShaderInit(Shader* shader) {
     for (uint32_t j = 0; j < shader->flagCount; j++) {
       if (hash ? (hash != shader->flagLookup[j]) : (flag->id != shader->flags[j].id)) continue;
 
-      uint32_t index = shader->activeFlagCount++;
+      uint32_t index = shader->overrideCount++;
 
       if (index != j) {
         gpu_shader_flag temp = shader->flags[index];
@@ -742,11 +742,13 @@ static void lovrShaderInit(Shader* shader) {
   }
 
   if (shader->info.type == SHADER_COMPUTE) {
+    /*
     gpu_compute_pipeline_info pipelineInfo = {
       .shader = shader->gpu,
       .flags = shader->flags,
-      .flagCount = shader->activeFlagCount
+      .flagCount = shader->overrideCount
     };
+    */
 
     // TODO append pipeline, compute/assign computePipeline index
     // gpu_pipeline_init_compute(state.pipelines[shader->computePipeline], &pipelineInfo);
@@ -786,10 +788,10 @@ Shader* lovrShaderCreate(ShaderInfo* info) {
   result = spv_merge(meta, 2, &merged);
   lovrCheck(result == SPV_OK, "Failed to merge Shader info: %s\n", spv_result_to_string(result));
 
-  uint32_t set = info->type == SHADER_GRAPHICS ? 2 : 0;
+  uint32_t userSet = info->type == SHADER_GRAPHICS ? 2 : 0;
 
   for (uint32_t i = 0; i < merged.resourceCount; i++) {
-    if (merged.resources[i].set == set) {
+    if (merged.resources[i].set == userSet) {
       shader->resourceCount++;
     }
   }
@@ -802,7 +804,7 @@ Shader* lovrShaderCreate(ShaderInfo* info) {
   shader->resources = malloc(shader->resourceCount * sizeof(ShaderResource));
   shader->flags = malloc(shader->flagCount * sizeof(gpu_shader_flag));
   shader->flagLookup = malloc(shader->flagCount * sizeof(uint32_t));
-  lovrAssert(shader->constants && shader->resources && shader->flag && shader->flagLookup, "Out of memory");
+  lovrAssert(shader->constants && shader->resources && shader->flags && shader->flagLookup, "Out of memory");
 
   for (uint32_t i = 0; i < merged.pushConstantCount; i++) {
     static const FieldType constantTypes[] = {
@@ -881,7 +883,7 @@ Shader* lovrShaderCreate(ShaderInfo* info) {
   shader->ref = 1;
   shader->gpu = (gpu_shader*) (shader + 1);
   shader->info = *info;
-  shader->layout = findLayout(slots, shader->resourceCount);
+  //shader->layout = findLayout(slots, shader->resourceCount);
 
   gpu_shader_info gpu = {
     .stages[0] = { info->stages[0]->data, info->stages[0]->size },
@@ -890,12 +892,14 @@ Shader* lovrShaderCreate(ShaderInfo* info) {
     .label = info->label
   };
 
+  /*
   if (info->type == SHADER_GRAPHICS) {
     gpu.layouts[0] = state.layouts[BUILTIN_LAYOUT];
     gpu.layouts[1] = NULL; // material
   }
 
-  gpu.layouts[set] = shader->resourceCount > 0 ? state.layouts[shader->layout] : NULL;
+  gpu.layouts[userSet] = shader->resourceCount > 0 ? state.layouts[shader->layout] : NULL;
+  */
 
   gpu_shader_init(shader->gpu, &gpu);
 
@@ -1382,7 +1386,7 @@ static size_t measureTexture(TextureFormat format, uint16_t w, uint16_t h, uint1
 // Only an explicit set of SPIR-V capabilities are allowed
 // Some capabilities require a GPU feature to be supported
 // Some common unsupported capabilities are checked directly, to provide better error messages
-static void checkShaderFeatures(spv_features* features, uint32_t count) {
+static void checkShaderFeatures(uint32_t* features, uint32_t count) {
   for (uint32_t i = 0; i < count; i++) {
     switch (features[i]) {
       case 0: break; // Matrix
